@@ -220,8 +220,8 @@ class Demorpher(nn.Module):
             print("noise nan: ",torch.isnan(noise).any())   
             z_ID, _ = self.noise_scheduler.sample_prev_timestep(z_ID, noise, t)
 
-        print(z_ID)
-        print(z_ID.shape)
+
+        z_ID = nn.functional.normalize(z_ID)
         z_ID = torch.reshape(z_ID, (z_ID.shape[0], 16, 14, 14))
         
         out = self.decoder(z_ID)
@@ -498,15 +498,21 @@ class unet(nn.Module):
 
 
         x = self.input_conv(x)
-
+        # già qui sale a >3 ...
+        
         t_embs = get_time_embeddings(t_embs, self.emb_dim)
         t_embs = self.time_proj(t_embs)
+
+        t_embs = nn.functional.normalize(t_embs)
         
         for i in range(len(self.down_blocks)):
+            #qui esplode!!
+            x = nn.functional.normalize(x)
             downblock_outs.append(x)
             x = self.down_blocks[i](x, t_embs)
 
         for i in range(len(self.mid_blocks)):
+            x = nn.functional.normalize(x)
             x = self.mid_blocks[i](x, t_embs)
         
         #conditional embeddings ... 
@@ -515,7 +521,10 @@ class unet(nn.Module):
             c = self.conditional_emb(c)
             x = torch.add(x, c)
         
+        x = nn.functional.normalize(x)
+
         for i in range(len(self.up_blocks)):
+            x = nn.functional.normalize(x)
             dout = downblock_outs.pop()
             x = self.up_blocks[i](x, dout , t_embs)
         x = self.output_norm(x)
