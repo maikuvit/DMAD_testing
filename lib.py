@@ -214,7 +214,7 @@ class Demorpher(nn.Module):
         print("z_ID nan: ",torch.isnan(z_ID).any())
         print(" z_A nan: ",torch.isnan(z_A).any())
         
-        for t in reversed(range(self.noise_scheduler.get_steps())):
+        for t in reversed(range(self.noise_scheduler.get_steps() // 8)):
             t = torch.as_tensor(t).repeat(z_A.shape[0])
             noise = self.latent_unet(z_ID, t, z_A)
             print("noise nan: ",torch.isnan(noise).any())   
